@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zyqt.platform.item.mapper.TProjectInfoMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.zyqt.platform.item.entity.TProjectInfo">
+        <id column="id" property="id"/>
+        <result column="pro_no" property="proNo"/>
+        <result column="pro_name" property="proName"/>
+        <result column="dept_no" property="deptNo"/>
+        <result column="dept_name" property="deptName"/>
+        <result column="type" property="type"/>
+        <result column="status" property="status"/>
+        <result column="pro_attr" property="proAttr"/>
+        <result column="join_unit" property="joinUnit"/>
+        <result column="user_id" property="userId"/>
+        <result column="user_name" property="userName"/>
+        <result column="create_time" property="createTime"/>
+        <result column="pro_desc" property="proDesc"/>
+        <result column="pre_money" property="preMoney"/>
+        <result column="buy_mean" property="buyMean"/>
+        <result column="pre_money_zy" property="preMoneyZy"/>
+        <result column="pre_money_wp" property="preMoneyWp"/>
+        <result column="cost_desc" property="costDesc"/>
+        <result column="study_conent" property="studyConent"/>
+        <result column="study_result" property="studyResult"/>
+        <result column="marks" property="marks"/>
+        <result column="sign_date" property="signDate"/>
+        <result column="off_date" property="offDate"/>
+        <result column="flow_status" property="flowStatus"/>
+        <result column="contract_date" property="contractDate"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+            id, pro_no, pro_name, dept_no, dept_name, type, status, pro_attr, join_unit, user_id, user_name, create_time, pro_desc, pre_money, buy_mean, pre_money_zy, pre_money_wp, cost_desc, study_conent, study_result, marks, sign_date, off_date, flow_status, contract_date
+        </sql>
+    <select id="queryProjectInfo" resultMap="BaseResultMap" parameterType="java.lang.String">
+        SELECT
+        p.id,
+        p.user_name,
+        p.user_id,
+        p.pro_no,
+        p.pro_name,
+        p.dept_no,
+        p.dept_name,
+        p.study_result,
+        p.sign_date,
+        p.create_time
+        FROM
+        t_project_info p
+        WHERE
+        p.pro_no = #{proNo}
+    </select>
+    <select id="queryProjectInfos" resultMap="BaseResultMap">
+        SELECT *  FROM
+        t_project_info p
+        WHERE 1=1
+        <if test="queryTodo != null">
+            and DATE_FORMAT(p.off_date,'%Y-%m')  = #{queryMonth} or DATE_FORMAT(p.create_time,'%Y-%m') = #{queryMonth}
+        </if>
+    </select>
+</mapper>
