@@ -6,14 +6,9 @@ import com.zyqt.platform.item.entity.TProjectInfo;
 import com.zyqt.platform.item.service.ITProjectInfoService;
 import com.zyqt.platform.util.BaseForm;
 import com.zyqt.platform.util.BasePage;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestMapping;
-
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
@@ -47,5 +42,18 @@ public class TProjectInfoController {
         result.setData(iTProjectInfoService.page(page, new QueryWrapper<>()));
         return result;
     }
+
+    @ApiOperation(value = "添加项目表数据")
+    @ApiResponses(value = {@ApiResponse(code = 1005, message = "操作失败")})
+    @RequestMapping(value = "/addProjectInfo", method = {RequestMethod.POST})
+    public BaseForm addProjectInfo(@RequestBody TProjectInfo tProjectInfo) {
+        BaseForm result = new BaseForm();
+        //projectInfo.createDefaultInfo((SysUser) SecurityUtils.getSubject().getPrincipal());
+        if (!iTProjectInfoService.save(tProjectInfo)) {
+            result.setStatus(BaseForm.Status.FAILURE);
+        }
+        return result;
+    }
+
 }
 
