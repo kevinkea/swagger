@@ -7,6 +7,7 @@ import com.zyqt.platform.item.service.ITProjectInfoService;
 import com.zyqt.platform.util.BaseForm;
 import com.zyqt.platform.util.BasePage;
 import io.swagger.annotations.*;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -51,6 +52,57 @@ public class TProjectInfoController {
         //projectInfo.createDefaultInfo((SysUser) SecurityUtils.getSubject().getPrincipal());
         if (!iTProjectInfoService.save(tProjectInfo)) {
             result.setStatus(BaseForm.Status.FAILURE);
+        }
+        return result;
+    }
+
+    @ApiOperation(value = "更改项目表数据"
+            , extensions = @Extension(properties = {@ExtensionProperty(name = "resourceType", value = "button")
+            , @ExtensionProperty(name = "parentCode", value = "")}))
+    @ApiImplicitParams({@ApiImplicitParam(name = "id", required = true)})
+    @ApiResponses(value = {@ApiResponse(code = 1005, message = "操作失败")})
+    @RequestMapping(value = "/updateProjectInfo", method = {RequestMethod.PUT})
+    @RequiresPermissions("manHour_management_project:updateProjectInfo")
+    public BaseForm updateProjectInfo(TProjectInfo tProjectInfo) {
+        BaseForm result = new BaseForm();
+        if (!iTProjectInfoService.updateById(tProjectInfo)) {
+            result.setStatus(BaseForm.Status.FAILURE);
+        }
+        return result;
+    }
+
+    @ApiOperation(value = "删除项目表数据"
+            , extensions = @Extension(properties = {@ExtensionProperty(name = "resourceType", value = "button")
+            , @ExtensionProperty(name = "parentCode", value = "")}))
+    @ApiImplicitParams({@ApiImplicitParam(name = "id", required = true)})
+    @ApiResponses(value = {@ApiResponse(code = 1005, message = "操作失败")})
+    @RequestMapping(value = "/delProjectInfo", method = {RequestMethod.DELETE})
+    @RequiresPermissions("manHour_management_project:delProjectInfo")
+    public BaseForm delProjectInfo(@RequestBody String id) {
+        BaseForm result = new BaseForm();
+        if (!iTProjectInfoService.removeById(id)) {
+            result.setStatus(BaseForm.Status.FAILURE);
+        }
+        return result;
+    }
+
+    /**
+     * 通过项目名称或项目编号查询与某条待办记录有关的项目信息
+     * @param proNo
+     * @return
+     */
+    @ApiOperation(value = "查询待办表关联的项目信息")
+    @ApiImplicitParams({@ApiImplicitParam(name = "proNo"),@ApiImplicitParam(name="proName")})
+    @ApiResponses(value = {@ApiResponse(code = 1005, message = "操作失败")})
+    @GetMapping("/queryProjectInfo")
+    public BaseForm queryProjectInfo(String proNo,String proName) {
+        BaseForm result = new BaseForm();
+        TProjectInfo info = new TProjectInfo();
+        info.setProNo(proNo);
+        try {
+            result.setData(iTProjectInfoService.getOne(new QueryWrapper<>(info)));
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         return result;
     }

@@ -5,8 +5,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.UUID;
 
 import com.baomidou.mybatisplus.annotation.TableName;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -26,7 +28,17 @@ import net.sf.jsqlparser.expression.DateTimeLiteralExpression;
 @TableName("t_project_info")
 public class TProjectInfo implements Serializable {
 
-private static final long serialVersionUID=1L;
+    private static final long serialVersionUID=1L;
+
+    /**
+     * 创建基本信息
+     **/
+    public void createDefaultInfo(SysUser user) {
+        this.id = UUID.randomUUID().toString().replaceAll("-", "");
+    }
+
+    @ApiModelProperty(value = "", position = 1)
+    private String id;
 
     /**
      * 项目编号，如20190319000001
