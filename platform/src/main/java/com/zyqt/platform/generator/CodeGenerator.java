@@ -45,6 +45,12 @@ public class CodeGenerator {
         gc.setAuthor("zgz");
         gc.setOpen(false);
         // gc.setSwagger2(true); 实体属性 Swagger2 注解
+        gc.setFileOverride(true); //是否覆盖
+        gc.setActiveRecord(true);// 不需要ActiveRecord特性的请改为false
+        gc.setEnableCache(false);// XML 二级缓存
+        gc.setBaseResultMap(true);// XML ResultMap
+        gc.setBaseColumnList(true);// XML columList
+        gc.setBaseColumnList(true);// XML columList
         mpg.setGlobalConfig(gc);
 
         // 数据源配置

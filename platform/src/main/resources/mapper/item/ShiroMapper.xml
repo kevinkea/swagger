@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zyqt.platform.item.mapper.ShiroMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="SysUserMap" type="com.zyqt.platform.item.entity.SysUser">
+        <id column="id" property="id"/>
+        <result column="user_name" property="userName"/>
+        <result column="real_name" property="realName"/>
+        <result column="password" property="password"/>
+        <result column="email" property="email"/>
+        <result column="mobile_phone" property="mobilePhone"/>
+        <result column="duty" property="duty"/>
+        <result column="station" property="station"/>
+        <result column="org_id" property="orgId"/>
+        <result column="status" property="status"/>
+        <result column="create_date" property="createDate"/>
+        <result column="create_by" property="createBy"/>
+        <result column="update_date" property="updateDate"/>
+        <result column="update_by" property="updateBy"/>
+    </resultMap>
+
+    <select id="getUserByName" resultMap="SysUserMap">
+        select * from sys_user where user_name = #{userName} and is_del ='0' and status = '1'
+    </select>
+
+    <select id="getUserByOneName" resultMap="SysUserMap">
+        select * from sys_user where user_name = #{userName} and is_del ='0'
+    </select>
+    <!--角色获取-->
+    <select id="getRoles" resultType="String">
+        select r.role_code
+        from sys_user u,sys_role r,sys_user_role ur
+        where u.id=ur.user_id
+        and r.id=ur.role_id
+        and u.user_name = #{userName}
+        and u.is_del ='0'
+        and r.status='0'
+    </select>
+    <!--角色权限获取-->
+    <select id="getPermissions" resultType="String">
+        SELECT
+        p.permission_code
+        FROM
+        sys_role r,
+        sys_permission p,
+        sys_role_permission rp
+        WHERE
+        1=1
+        AND r.id = rp.role_id
+        AND p.id = rp.permission_id
+        AND r.role_code = #{roleCode}
+        and r.status='0'
+    </select>
+    <!--获取全部权限-->
+    <select id="getAllPermissions" resultType="String">
+        SELECT
+        sp.permission_code
+        FROM
+        sys_permission sp
+        WHERE
+        1=1
+        AND (sp.resource_type != 'menu' OR sp.resource_type IS NULL)
+    </select>
+
+</mapper>
+

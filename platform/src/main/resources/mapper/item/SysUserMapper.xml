@@ -1,5 +1,287 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.zyqt.platform.item.mapper.SysUserMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.zyqt.platform.item.entity.SysUser">
+        <id column="id" property="id"/>
+        <result column="user_name" property="userName"/>
+        <result column="real_name" property="realName"/>
+        <result column="passwords" property="password"/>
+        <result column="email" property="email"/>
+        <result column="mobile_phone" property="mobilePhone"/>
+        <result column="duty" property="duty"/>
+        <result column="station" property="station"/>
+        <result column="user_number" property="userNumber"/>
+        <result column="org_code" property="orgCode"/>
+        <result column="org_id" property="orgId"/>
+        <result column="status" property="status"/>
+        <result column="create_date" property="createDate"/>
+        <result column="create_by" property="createBy"/>
+        <result column="update_date" property="updateDate"/>
+        <result column="update_by" property="updateBy"/>
+    </resultMap>
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, user_name, real_name, email, mobile_phone, duty,station, org_id, status,user_number, create_date, create_by, update_date, update_by
+    </sql>
+    <sql id="getSuperUserListByUserId_List">
+        su.id, su.user_name, su.real_name, su.email, su.mobile_phone , su.duty ,su.station,su.user_number ,su.station , su.create_date, su.create_by, su.update_date, su.update_by
+    </sql>
+    <!-- 通用查询结果列 -->
+    <sql id="getSuperUserList_List">
+        sup.id, sup.user_name, sup.real_name,
+    </sql>
+
+    <sql id="getUserInfoList_condition">
+        <if test="orgId !=null and orgId !=''">
+            and su.org_id = #{orgId}
+        </if>
+        <if test="orgType !=null and orgType !=''">
+            and so.org_code like #{orgType}
+        </if>
+        <if test="roleId !=null and roleId !=''">
+            and sr.id =#{roleId}
+        </if>
+        <if test="status !=null and status !=''">
+            and su.status = #{status}
+        </if>
+        <if test="realName !=null and realName !=''">
+            and su.real_name like CONCAT('%',#{realName},'%')
+        </if>
+        <if test="keyword != null and keyword != ''">
+            <!--and	MATCH (su.user_name, su.real_name,su.mobile_phone,su.duty) AGAINST (#{keyword})-->
+            AND CONCAT(
+            IFNULL(su.user_name, ''),
+            IFNULL(su.real_name, ''),
+            IFNULL(su.mobile_phone, ''),
+            IFNULL(su.duty,'')
+            ) LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        <if test="userIds !=null">
+            and su.id in
+            <foreach collection="userIds" item="userid" open="(" close=")" separator=",">
+                #{userid}
+            </foreach>
+        </if>
+        <if test="roleIds !=null">
+            and sr.id in
+            <foreach collection="roleIds" item="roleid" open="(" close=")" separator=",">
+                #{roleid}
+            </foreach>
+        </if>
+        and su.is_del ='0'
+    </sql>
+
+    <select id="getUserInfoList" resultMap="BaseResultMap">
+        select DISTINCT
+        su.*
+        from
+        sys_user su,
+        sys_role sr,
+        sys_user_role sur,
+        sys_org so
+        WHERE 1=1
+        and su.id = sur.user_id
+        and sr.id = sur.role_id
+        and su.org_id = so.id
+        <include refid="getUserInfoList_condition"/>
+        order by su.real_name
+    </select>
+    <!--条件获取全部用户信息列表-->
+    <select id="getAllUserInfo" resultMap="BaseResultMap">
+        select
+        su.*,
+        so.org_code,
+        so.org_name as orgName,
+        GROUP_CONCAT(sr.role_name)as roleName
+        from
+        sys_user su,
+        sys_role sr,
+        sys_user_role sur,
+        sys_org so
+        WHERE 1=1
+        and su.id = sur.user_id
+        and sr.id = sur.role_id
+        and su.org_id = so.id
+        <include refid="getUserInfoList_condition"/>
+        group by su.id
+        order by su.real_name
+    </select>
+    <!--获取用户绑定上级集合-->
+    <select id="getSuperUserListByUserId" resultMap="BaseResultMap">
+        select
+        so.org_name as orgName,
+        <include refid="getSuperUserListByUserId_List"/>
+        from
+        sys_user su,
+        sys_org so,
+        sys_user_super sus
+        where 1=1
+        and su.id = sus.super_id
+        and so.id=su.org_id
+        and su.is_del='0'
+        <if test="orgId != null and orgId !=''">
+            and so.id=#{orgId}
+        </if>
+        <if test="userId != null and userId !=''">
+            and sus.user_id = #{userId}
+        </if>
+    </select>
+    <!--获取用户绑定下级集合-->
+    <select id="getNextUserListByUserId" resultMap="BaseResultMap">
+        select
+        so.org_name as orgName,
+        <include refid="getSuperUserListByUserId_List"/>
+        from
+        sys_user su,
+        sys_org so,
+        sys_user_super sus
+        where 1=1
+        and su.id = sus.user_id
+        and so.id=su.org_id
+        and su.is_del='0'
+        <if test="orgId != null and orgId !=''">
+            and so.id=#{orgId}
+        </if>
+        <if test="userId != null and userId !=''">
+            and sus.super_id = #{userId}
+        </if>
+    </select>
+    <!--获取用户绑定下级id集合-->
+    <select id="getNextUserIdByUserId" resultMap="BaseResultMap">
+		select
+		sus.user_id
+		from
+		sys_user_super sus
+		where 1=1
+		and sus.super_id = #{userId}
+	</select>
+    <!--获取用户上级集合-->
+    <select id="getSuperUserList" resultMap="BaseResultMap">
+        select
+        <include refid="getSuperUserList_List"/>
+        sr.role_name as roleName,
+        so.org_name as orgName
+        from
+        sys_user sup,
+        sys_role sr,
+        sys_user_role sur,
+        sys_org so
+        where 1=1
+        and sup.id=sur.user_id
+        and sr.id=sur.role_id
+        and sup.org_id=so.id
+        <if test="orgCodeList != null and orgCodeList.size > 0">
+            and so.org_code in
+            <foreach collection="orgCodeList" item="orgCode" open="(" close=")" separator=",">
+                #{orgCode}
+            </foreach>
+        </if>
+        <if test="topOrgCode != null and topOrgCode !=''">
+            and so.org_code like concat(#{topOrgCode}, '%')
+        </if>
+        <if test="supStation != null and supStation !=''">
+            and sr.role_rank =#{supStation}
+        </if>
+        <if test="orgIdFilter != null and orgIdFilter !=''">
+            and sup.org_id=#{orgIdFilter}
+        </if>
+        <if test="userName != null and userName !=''">
+            and sup.real_name like CONCAT('%',#{userName},'%')
+        </if>
+        and sup.is_del ='0'
+        order by sup.real_name
+    </select>
+    <!--获取用户下级集合-->
+    <select id="getNextUserList" resultMap="BaseResultMap">
+        select
+        sup.*,
+        sr.role_name as roleName,
+        so.org_name as orgName
+        from
+        sys_user sup,
+        sys_role sr,
+        sys_user_role sur,
+        sys_org so
+        where 1=1
+        and sup.id=sur.user_id
+        and sr.id=sur.role_id
+        and sup.org_id=so.id
+        <if test="orgCode != null and orgCode != ''">
+            and so.org_code like CONCAT(#{orgCode},'%')
+        </if>
+        <if test="nextStation != null and nextStation !=''">
+            and sr.role_rank =#{nextStation}
+        </if>
+        and sup.is_del ='0'
+        order by sup.real_name
+    </select>
+
+    <!--通过组织机构编码获取用户名集合-->
+    <select id="getUserNamesByOrgCode" resultType="java.lang.String">
+		select
+		su.user_name
+		from
+		sys_user su,
+		sys_org so
+		where 1=1
+		and su.org_id = so.id
+		and so.org_code like CONCAT(#{orgCode},'%')
+		and su.is_del='0'
+	</select>
+    <!--获取全部最高级组织机构编码-->
+    <select id="getTopCode" resultType="java.lang.String">
+        select distinct
+        so.org_code
+        from
+        sys_user su,
+        sys_org so
+        where 1=1
+        and su.org_id=so.id
+        <!--and su.is_top='1'-->
+        and su.is_del='0'
+        order by so.org_code desc
+    </select>
+    <!--获取多个用户绑定下级id集合-->
+    <select id="getNextUserIdByUserIds" resultType="java.lang.String">
+        select
+        sus.user_id
+        from
+        sys_user_super sus
+        where 1=1
+        and sus.super_id in
+        <foreach collection="userIds" item="userId" open="(" close=")" separator=",">
+            #{userId}
+        </foreach>
+    </select>
+    <select id="getUserIdByUserName" resultType="java.lang.String">
+		select id from sys_user where 1=1 and user_name=#{userName} and is_del='0'
+	</select>
+    <select id="getUserIdsByOrgId" resultType="java.lang.String">
+		select
+		su.id
+		from
+		sys_user su,
+		sys_org so,
+		(select org_code from sys_org where id=#{orgId}) as org
+		where 1=1
+		and su.org_id = so.id
+		and so.org_code like CONCAT(org.org_code,'%')
+		and su.is_del='0'
+	</select>
+
+    <select id="querySysUsersByRealName" resultMap="BaseResultMap" parameterType="java.lang.String">
+        SELECT
+            t.id,
+            t.user_name,
+            t.real_name
+        FROM
+            sys_user t
+        WHERE
+            t.is_del = '0'
+            AND t.STATUS = '1'
+            AND MATCH ( real_name ) AGAINST ( #{realName} IN BOOLEAN MODE )
+
+    </select>
 
 </mapper>

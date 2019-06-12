@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zyqt.platform.item.mapper.SysOrgMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.zyqt.platform.item.entity.SysOrg">
+        <id column="id" property="id"/>
+        <result column="org_name" property="orgName"/>
+        <result column="description" property="description"/>
+        <result column="org_rank_id" property="orgRankId"/>
+        <result column="parent_org_id" property="parentOrgId"/>
+        <!--  <result column="org_number" property="orgNumber"/>-->
+        <result column="org_code" property="orgCode"/>
+        <result column="create_date" property="createDate"/>
+        <result column="create_by" property="createBy"/>
+        <result column="update_date" property="updateDate"/>
+        <result column="update_by" property="updateBy"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, org_name, description, parent_org_id, org_code, create_date, create_by, update_date, update_by
+    </sql>
+    <!-- getSysOrgPage查询结果列 -->
+    <sql id="getSysOrgPage_List">
+        so.id, so.org_name, so.description,
+        so.org_code, so.parent_org_id,so.org_rank_id,
+        so.create_date, so.create_by, so.update_date, so.update_by
+    </sql>
+    <!--组织机构分页查询-->
+    <select id="getSysOrgPage" resultMap="BaseResultMap">
+        SELECT
+        <include refid="getSysOrgPage_List"/>,
+        sop.`org_name` AS parentOrgName ,
+        sor.rank_name AS rankName
+        FROM
+        sys_org_rank sor,
+        sys_org so
+        LEFT JOIN sys_org sop
+        ON so.`parent_org_id` = sop.`id`
+        WHERE 1 = 1
+        and sor.id = so.org_rank_id
+        <if test="supOrgCode != null and supOrgCode != ''">
+            AND (so.org_code LIKE CONCAT(#{supOrgCode},'___') OR
+            so.org_code LIKE CONCAT(#{supOrgCode},'____'))
+        </if>
+        <if test="orgName != null and orgName != ''">
+            AND so.org_name LIKE CONCAT('%',#{orgName},'%')
+        </if>
+        <!--   <if test="orgNumber != null and orgNumber != ''">
+               AND so.org_number = #{orgNumber}
+           </if>-->
+        <if test="orgCode != null and orgCode != ''">
+            AND so.org_code like CONCAT(#{orgCode},'%')
+        </if>
+        <if test="orgRank != null and orgRank != ''">
+            AND so.org_rank_id =#{orgRank}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND CONCAT(
+            <!-- IFNULL(so.org_address, ''),-->
+            <!-- IFNULL(so.coordinate, ''),-->
+            IFNULL(so.`org_name`, ''),
+            <!-- IFNULL(so.`org_area`, ''),-->
+            IFNULL(sor.rank_name, '')
+            <!--IFNULL(sop.`org_name`, '')-->
+            ) LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        <!--ORDER BY so.`org_code`-->
+    </select>
+    <!--组织机构树形查询-->
+    <select id="getSysOrgTree" resultMap="BaseResultMap">
+        SELECT
+        so.`id`,
+        so.`org_name`,
+        so.`org_code`,
+        so.org_rank_id,
+        sor.rank_code AS rankCode
+        FROM
+        sys_org so
+        LEFT JOIN sys_org_rank sor
+        ON sor.id = so.org_rank_id
+        WHERE 1 = 1
+        <choose>
+            <when test="orgName !=null">
+                and so.`org_name` LIKE CONCAT('%',#{orgName},'%')
+                <if test="loginOrgCode != null">
+                    and so.`org_code` LIKE CONCAT(#{loginOrgCode},'%')
+                </if>
+            </when>
+            <when test="parentOrgId != null and parentOrgId != ''">
+                AND so.`parent_org_id` = #{parentOrgId}
+            </when>
+            <when test="orgId != null and orgId != ''">
+                AND so.`id` = #{orgId}
+            </when>
+            <when test="orgRank !=null">
+                and so.org_rank_id = #{orgRank}
+            </when>
+            <otherwise>
+                <choose>
+                    <when test="loginOrgId!= null and loginOrgId != ''">
+                        and so.`id` = #{loginOrgId}
+                    </when>
+                    <otherwise>
+                        AND (so.`parent_org_id` IS NULL OR so.`parent_org_id` ='')
+                    </otherwise>
+                </choose>
+            </otherwise>
+        </choose>
+        ORDER BY so.`org_code`
+    </select>
+    <!--组织机构直属上级-->
+    <select id="getSupOrg" resultMap="BaseResultMap">
+
+    </select>
+
+    <!-- 根据组织机构代码查询id号 -->
+    <select id="selectOrgIdByNumber" resultType="java.lang.String">
+        select so.id from sys_org so
+        WHERE so.org_code=#{orgCode}
+    </select>
+
+</mapper>
